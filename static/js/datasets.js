@@ -85,7 +85,6 @@ function importDataset() {
     const modal = bootstrap.Modal.getInstance(document.getElementById('datasetPreviewModal'));
     modal.hide();
     
-    // Get API key from local storage
     const apiKey = localStorage.getItem('current_api_key');
     if (!apiKey) {
         alert('Please generate an API key first');
@@ -129,7 +128,6 @@ function copyApiKey() {
     }, 2000);
 }
 
-// Enhance the existing saveModel function
 const originalSaveModel = window.saveModel;
 window.saveModel = function() {
     const name = document.getElementById('modelName').value;
@@ -157,14 +155,11 @@ window.saveModel = function() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            // Store API key
             localStorage.setItem('current_api_key', data.api_key);
             localStorage.setItem(`model_${data.model_id}_api_key`, data.api_key);
             
-            // Hide model modal
             bootstrap.Modal.getInstance(document.getElementById('saveModelModal')).hide();
             
-            // Show API key modal
             const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
             document.getElementById('apiKeyDisplay').value = data.api_key;
             apiKeyModal.show();
@@ -175,3 +170,91 @@ window.saveModel = function() {
         }
     });
 };
+
+function showImportModelModal() {
+    const modal = new bootstrap.Modal(document.getElementById('importModelModal'));
+    modal.show();
+}
+
+function importModel() {
+    const fileInput = document.getElementById('modelFileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a file to import');
+        return;
+    }
+
+    if (!file.name.endsWith('.json')) {
+        alert('Please select a valid JSON file');
+        return;
+    }
+
+    const apiKey = localStorage.getItem('current_api_key');
+    if (!apiKey) {
+        alert('Please generate an API key first');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('model_file', file);
+
+    fetch('/api/models/import', {
+        method: 'POST',
+        headers: {
+            'X-API-Key': apiKey
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+            return;
+        }
+        
+        localStorage.setItem(`model_${data.model_id}_api_key`, data.api_key);
+        
+        bootstrap.Modal.getInstance(document.getElementById('importModelModal')).hide();
+        
+        alert('Model imported successfully!');
+        
+        loadModels();
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    });
+}
+
+function exportModel(id) {
+    const apiKey = localStorage.getItem(`model_${id}_api_key`);
+    if (!apiKey) {
+        alert('API key not found for this model');
+        return;
+    }
+    
+    fetch(`/api/models/${id}/export`, {
+        headers: {
+            'X-API-Key': apiKey
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Export failed');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `model_${id}_export.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        alert(`Error exporting model: ${error.message}`);
+    });
+}

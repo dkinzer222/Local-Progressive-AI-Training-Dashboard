@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 from sqlalchemy.orm import DeclarativeBase
@@ -9,6 +9,8 @@ from functools import wraps
 from datasets import load_dataset
 from huggingface_hub import list_datasets
 import time
+from werkzeug.utils import secure_filename
+import tempfile
 
 class Base(DeclarativeBase):
     pass
@@ -182,13 +184,85 @@ def create_model():
 @app.route('/api/models/<int:model_id>/export', methods=['GET'])
 @require_api_key
 def export_model(model_id):
-    model = AIModel.query.get_or_404(model_id)
-    return jsonify({
-        "name": model.name,
-        "version": model.version,
-        "configuration": model.configuration,
-        "state": model.state
-    })
+    try:
+        model = AIModel.query.get_or_404(model_id)
+        
+        export_data = {
+            "name": model.name,
+            "version": model.version,
+            "created_at": model.created_at.isoformat(),
+            "configuration": model.configuration,
+            "state": model.state,
+            "metadata": {
+                "export_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "format_version": "1.0"
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+            json.dump(export_data, tmp, indent=2)
+        
+        response = send_file(
+            tmp.name,
+            mimetype='application/json',
+            as_attachment=True,
+            download_name=f"{model.name.lower().replace(' ', '_')}_v{model.version}.json"
+        )
+        
+        @response.call_on_close
+        def cleanup():
+            os.unlink(tmp.name)
+            
+        return response
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/models/import', methods=['POST'])
+@require_api_key
+def import_model():
+    try:
+        if 'model_file' not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+            
+        file = request.files['model_file']
+        if file.filename == '':
+            return jsonify({"error": "No file selected"}), 400
+            
+        if not file.filename.endswith('.json'):
+            return jsonify({"error": "Invalid file format. Please upload a JSON file"}), 400
+        
+        try:
+            import_data = json.load(file)
+            required_fields = ['name', 'version', 'configuration', 'state']
+            if not all(field in import_data for field in required_fields):
+                return jsonify({"error": "Invalid model file format"}), 400
+                
+            model = AIModel(
+                name=f"{import_data['name']} (Imported)",
+                version=import_data['version'],
+                configuration=import_data['configuration'],
+                state=import_data['state']
+            )
+            
+            api_key = model.set_api_key()
+            
+            db.session.add(model)
+            db.session.commit()
+            
+            return jsonify({
+                "status": "success",
+                "message": "Model imported successfully",
+                "model_id": model.id,
+                "api_key": api_key
+            })
+            
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid JSON file"}), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/train', methods=['POST'])
 def train():
