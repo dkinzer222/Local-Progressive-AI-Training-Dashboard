@@ -21,12 +21,13 @@
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
 </head>
 <body data-bs-theme="dark">
-    <!-- Theme Toggle -->
-    <div class="theme-toggle position-fixed top-0 end-0 m-3">
+    <!-- Theme Controls -->
+    <div class="theme-controls position-fixed top-0 end-0 m-3 d-flex align-items-center">
         <button class="btn btn-outline-secondary" id="themeToggle">
             <i class="bi bi-sun-fill" id="lightIcon"></i>
             <i class="bi bi-moon-fill" id="darkIcon" style="display: none;"></i>
         </button>
+        <!-- Theme selector will be dynamically added here by theme.js -->
     </div>
 
     <div class="container-fluid px-4">
@@ -258,7 +259,7 @@
         </div>
     </div>
 
-    <!-- Include all modals from original code with updated styling -->
+    <!-- All modals from original code -->
     <!-- Save Dataset Modal -->
     <div class="modal fade" id="saveDatasetModal" tabindex="-1">
         <div class="modal-dialog">
