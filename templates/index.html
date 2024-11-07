@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/training.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </head>
@@ -17,14 +18,33 @@
             <div id="datasets" class="mb-3"></div>
             <div class="btn-group mb-3">
                 <button class="btn btn-secondary" onclick="addDataset()">Add Dataset</button>
-                <button class="btn btn-primary" onclick="startTraining()">Start Training</button>
+                <button class="btn btn-primary" id="trainButton" onclick="startTraining()">Start Training</button>
             </div>
             
             <div class="progress mb-3">
-                <div id="progressFill" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                <div id="progressFill" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
             
             <div id="levelIndicator" class="alert alert-info">Level 1</div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Training Visualization</h5>
+                            <canvas id="trainingChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Memory Patterns</h5>
+                            <canvas id="memoryChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div id="trainingProgress" class="training-log border p-3">
                 <h3>Training Progress:</h3>

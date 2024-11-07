@@ -37,61 +37,110 @@ def train():
         return jsonify({"status": "error", "message": "No training data provided"}), 400
     
     results = []
-    for item in data['training_data']:
-        training_data = TrainingData(
-            input_text=item['input'],
-            expected_output=item['output'],
-            level=data.get('level', 1)
-        )
-        db.session.add(training_data)
+    try:
+        for item in data['training_data']:
+            if not item.get('input') or not item.get('output'):
+                continue
+                
+            training_data = TrainingData(
+                input_text=item['input'],
+                expected_output=item['output'],
+                level=data.get('level', 1)
+            )
+            db.session.add(training_data)
+            
+            # Train AI Engine
+            score, message, patterns = ai_engine.train(item['input'], item['output'])
+            training_data.score = score
+            results.append({
+                "score": score,
+                "message": message,
+                "patterns": patterns
+            })
         
-        # Train AI Engine
-        score, message = ai_engine.train(item['input'], item['output'])
-        training_data.score = score
-        results.append({"score": score, "message": message})
-    
-    db.session.commit()
-    return jsonify({"status": "success", "results": results})
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "results": results
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "status": "error",
+            "message": f"Training error: {str(e)}"
+        }), 500
 
 @socketio.on('start_training')
 def handle_training(data):
     current_level = data.get('current_level', 1)
     training_data = data.get('data', [])
     
-    for i, item in enumerate(training_data):
-        # Train the AI
-        score, message = ai_engine.train(item['input'], item['output'])
-        progress = ((i + 1) / len(training_data)) * 100
-        
-        # Store pattern in memory
-        memory = AIMemory(
-            pattern_type='basic',
-            pattern=item['input'],
-            confidence=score
-        )
-        db.session.add(memory)
-        db.session.commit()
-        
-        # Emit progress
-        socketio.emit('training_progress', {
-            'progress': progress,
+    if not training_data:
+        emit('training_progress', {
+            'progress': 0,
             'level': current_level,
-            'message': f'Training Level {current_level}: {message} (Score: {score:.2f})'
+            'message': 'No training data provided',
+            'score': 0,
+            'patterns': {}
+        })
+        return
+    
+    try:
+        for i, item in enumerate(training_data):
+            if not item.get('input') or not item.get('output'):
+                continue
+                
+            # Train the AI
+            score, message, patterns = ai_engine.train(item['input'], item['output'])
+            progress = ((i + 1) / len(training_data)) * 100
+            
+            # Store pattern in memory
+            memory = AIMemory(
+                pattern_type='basic',
+                pattern=item['input'],
+                confidence=score
+            )
+            db.session.add(memory)
+            db.session.commit()
+            
+            # Emit progress with visualization data
+            emit('training_progress', {
+                'progress': progress,
+                'level': ai_engine.current_level,
+                'message': message,
+                'score': score,
+                'patterns': patterns
+            })
+            
+    except Exception as e:
+        db.session.rollback()
+        emit('training_progress', {
+            'progress': 100,
+            'level': current_level,
+            'message': f"Training error: {str(e)}",
+            'score': 0,
+            'patterns': {}
         })
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    user_input = request.json.get('message', '')
-    if not user_input:
-        return jsonify({"response": "Please provide a message"}), 400
+    try:
+        user_input = request.json.get('message', '')
+        if not user_input:
+            return jsonify({"response": "Please provide a message"}), 400
+            
+        # Get response from AI Engine
+        response, confidence = ai_engine.generate_response(user_input)
         
-    # Get response from AI Engine
-    response, confidence = ai_engine.generate_response(user_input)
-    
-    return jsonify({
-        "response": response,
-        "confidence": confidence
-    })
+        return jsonify({
+            "response": response,
+            "confidence": confidence
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Chat error: {str(e)}"
+        }), 500
 
 with app.app_context():
     db.create_all()
