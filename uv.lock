@@ -1059,6 +1059,7 @@ dependencies = [
     { name = "huggingface-hub" },
     { name = "psycopg2-binary" },
     { name = "pygithub" },
+    { name = "requests" },
 ]
 
 [package.metadata]
@@ -1071,6 +1072,7 @@ requires-dist = [
     { name = "huggingface-hub", specifier = ">=0.26.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pygithub", specifier = ">=2.5.0" },
+    { name = "requests" },
 ]
 
 [[package]]

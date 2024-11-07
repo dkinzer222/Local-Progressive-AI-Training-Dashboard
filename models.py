@@ -1,4 +1,4 @@
-from app import db
+from database import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
@@ -32,7 +32,6 @@ class Dataset(db.Model):
         return f'<Dataset {self.name} v{self.version}>'
 
     def to_dict(self):
-        """Convert dataset to dictionary for serialization"""
         return {
             'id': self.id,
             'name': self.name,
@@ -53,20 +52,17 @@ class AIModel(db.Model):
     datasets = db.relationship('Dataset', backref='model', lazy=True)
     
     def set_api_key(self):
-        """Generate a new API key and store its hash"""
         api_key = secrets.token_urlsafe(32)
         self.api_key_hash = generate_password_hash(api_key)
         return api_key
     
     def verify_api_key(self, api_key):
-        """Verify the provided API key"""
         return check_password_hash(self.api_key_hash, api_key)
     
     def __repr__(self):
         return f'<AIModel {self.name} v{self.version}>'
     
     def to_dict(self):
-        """Convert model to dictionary for serialization"""
         return {
             'id': self.id,
             'name': self.name,
@@ -79,7 +75,6 @@ class AIModel(db.Model):
     
     @staticmethod
     def from_dict(data):
-        """Create model from dictionary"""
         model = AIModel(
             name=data['name'],
             version=data.get('version', '1.0'),
@@ -87,7 +82,6 @@ class AIModel(db.Model):
             state=data.get('state', {})
         )
         
-        # Import associated datasets
         if 'datasets' in data:
             for ds_data in data['datasets']:
                 dataset = Dataset(
@@ -101,7 +95,6 @@ class AIModel(db.Model):
         return model
     
     def serialize_state(self):
-        """Serialize model state for export"""
         try:
             return {
                 'model_info': self.to_dict(),
@@ -115,7 +108,6 @@ class AIModel(db.Model):
     
     @staticmethod
     def validate_import_data(data):
-        """Validate import data structure"""
         required_fields = ['model_info', 'metadata']
         if not all(field in data for field in required_fields):
             raise ValueError("Invalid model file format: missing required fields")

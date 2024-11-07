@@ -1,8 +1,8 @@
 import os
 from flask import Flask, render_template, jsonify, request, send_file
-from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 from sqlalchemy.orm import DeclarativeBase
+from database import db
 from utils.ai_engine import AIEngine
 import json, requests
 from functools import wraps
@@ -15,10 +15,6 @@ import tempfile
 from github import Github
 import base64
 
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
@@ -31,6 +27,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "dev_key"
 socketio = SocketIO(app)
 db.init_app(app)
 
+# Import models after db initialization to avoid circular imports
 from models import TrainingData, AIMemory, Dataset, AIModel
 
 ai_engine = AIEngine()
@@ -102,7 +99,7 @@ def create_model():
             name=data['name'],
             version=data.get('version', '1.0'),
             configuration=data.get('configuration', {}),
-            state=ai_engine.memory
+            state={}
         )
         api_key = model.set_api_key()
         db.session.add(model)
@@ -277,5 +274,7 @@ def export_github_model():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-with app.app_context():
-    db.create_all()
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(host='0.0.0.0', port=5000)
