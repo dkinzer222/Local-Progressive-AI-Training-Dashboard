@@ -30,6 +30,64 @@
             <div class="tab-pane fade show active" id="nav-training" role="tabpanel">
                 <div class="training-interface card p-4 mb-4">
                     <h2>Training Interface</h2>
+                    
+                    <!-- Real-time Status Panel -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Current Status</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="status-item">
+                                        <label>Operation:</label>
+                                        <div id="currentOperation" class="status-value">Idle</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="status-item">
+                                        <label>Progress:</label>
+                                        <div id="operationProgress" class="status-value">0%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="status-item">
+                                        <label>ETA:</label>
+                                        <div id="operationETA" class="status-value">--:--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level Progress Panel -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Level Progress</h5>
+                            <div id="levelRequirements" class="mb-3">
+                                <div class="requirement-item">
+                                    <label>Success Rate:</label>
+                                    <div class="progress">
+                                        <div id="successRateProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="requirement-item">
+                                    <label>Pattern Diversity:</label>
+                                    <div class="progress">
+                                        <div id="diversityProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="requirement-item">
+                                    <label>Training Iterations:</label>
+                                    <div class="progress">
+                                        <div id="iterationsProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="levelObjectives" class="alert alert-info">
+                                Current Level Objectives will appear here
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="datasets" class="mb-3"></div>
                     <div class="btn-group mb-3">
                         <button class="btn btn-secondary" onclick="addDataset()">Add Dataset</button>
@@ -37,11 +95,13 @@
                         <button class="btn btn-success" onclick="saveCurrentDataset()">Save Dataset</button>
                     </div>
                     
-                    <div class="progress mb-3">
-                        <div id="progressFill" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    <!-- Level Timeline -->
+                    <div class="level-timeline mb-4">
+                        <h5>Level Progression</h5>
+                        <div class="timeline-container" id="levelTimeline">
+                            <!-- Timeline items will be added dynamically -->
+                        </div>
                     </div>
-                    
-                    <div id="levelIndicator" class="alert alert-info">Level 1</div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -73,8 +133,14 @@
                         </div>
                     </div>
                     
-                    <div id="trainingProgress" class="training-log border p-3">
-                        <h3>Training Progress:</h3>
+                    <!-- Activity Log -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Activity Log</h5>
+                            <div id="trainingProgress" class="activity-log">
+                                <div class="log-entries"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -89,9 +155,7 @@
                             <input type="text" id="huggingfaceSearch" class="form-control" placeholder="Search HuggingFace datasets...">
                             <button class="btn btn-secondary" onclick="searchHuggingFaceDatasets()">Search</button>
                         </div>
-                        <div id="huggingfaceResults" class="mb-3">
-                            <!-- Search results will be displayed here -->
-                        </div>
+                        <div id="huggingfaceResults" class="mb-3"></div>
                     </div>
                     <div class="mb-3">
                         <button class="btn btn-primary" onclick="showSaveDatasetModal()">Create New Dataset</button>

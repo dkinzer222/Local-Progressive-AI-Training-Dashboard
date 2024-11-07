@@ -25,6 +25,33 @@ const exampleDatasets = [
     }
 ];
 
+const LEVEL_OBJECTIVES = {
+    1: {
+        title: "Letter Pattern Recognition",
+        requirements: ["Learn individual letter patterns", "Achieve 70% accuracy", "Process 100 training samples"],
+        threshold: { successRate: 0.7, diversity: 0.4, iterations: 100 }
+    },
+    2: {
+        title: "Word Formation",
+        requirements: ["Identify common word patterns", "Achieve 75% accuracy", "Learn 200 unique patterns"],
+        threshold: { successRate: 0.75, diversity: 0.5, iterations: 200 }
+    },
+    3: {
+        title: "Basic Sentence Structure",
+        requirements: ["Form simple sentences", "Achieve 80% accuracy", "Master 300 patterns"],
+        threshold: { successRate: 0.8, diversity: 0.6, iterations: 300 }
+    }
+};
+
+let trainingStartTime = null;
+let currentOperation = '';
+let operationStartTime = null;
+let trainingStats = {
+    successRate: 0,
+    patternDiversity: 0,
+    iterations: 0
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
     loadDatasets();
@@ -111,7 +138,7 @@ function loadDatasets() {
 
 function loadExampleDatasets() {
     const container = document.getElementById('datasets');
-    container.innerHTML = ''; // Clear existing datasets
+    container.innerHTML = '';
     
     exampleDatasets.forEach((dataset, index) => {
         const datasetId = index + 1;
@@ -268,18 +295,100 @@ function exportModel(id) {
     });
 }
 
-socket.on('training_progress', function(data) {
-    updateProgress(data.progress);
-    updateLevelIndicator(data.level);
-    appendTrainingLog(data.message);
-    updateTrainingChart(data.score);
-    updateMemoryPatterns(data.patterns);
+function updateTrainingStatus(operation, progress) {
+    document.getElementById('currentOperation').textContent = operation;
+    document.getElementById('operationProgress').textContent = `${Math.round(progress)}%`;
     
-    if (data.progress >= 100) {
-        document.querySelector('#trainButton').disabled = false;
-        document.querySelector('.chat-interface').style.display = 'block';
+    if (operation !== currentOperation) {
+        currentOperation = operation;
+        operationStartTime = Date.now();
     }
-});
+    
+    if (progress > 0) {
+        const elapsed = Date.now() - operationStartTime;
+        const totalTime = elapsed / (progress / 100);
+        const remainingTime = totalTime - elapsed;
+        const minutes = Math.floor(remainingTime / 60000);
+        const seconds = Math.floor((remainingTime % 60000) / 1000);
+        document.getElementById('operationETA').textContent = 
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function updateLevelProgress(stats) {
+    const level = LEVEL_OBJECTIVES[currentLevel];
+    if (!level) return;
+    
+    const thresholds = level.threshold;
+    
+    document.getElementById('successRateProgress').style.width = 
+        `${(stats.successRate / thresholds.successRate) * 100}%`;
+    document.getElementById('diversityProgress').style.width = 
+        `${(stats.patternDiversity / thresholds.diversity) * 100}%`;
+    document.getElementById('iterationsProgress').style.width = 
+        `${(stats.iterations / thresholds.iterations) * 100}%`;
+    
+    document.getElementById('levelObjectives').innerHTML = `
+        <h6>Current Level: ${level.title}</h6>
+        <ul>
+            ${level.requirements.map(req => `<li>${req}</li>`).join('')}
+        </ul>
+    `;
+}
+
+function updateTimeline() {
+    const timeline = document.getElementById('levelTimeline');
+    timeline.innerHTML = '';
+    
+    for (let i = 1; i <= Math.max(currentLevel, 3); i++) {
+        const level = LEVEL_OBJECTIVES[i];
+        if (!level) continue;
+        
+        const timelineItem = document.createElement('div');
+        timelineItem.className = `timeline-item ${i === currentLevel ? 'current' : ''}`;
+        timelineItem.innerHTML = `
+            <div class="timeline-content">
+                <h6>Level ${i}: ${level.title}</h6>
+                <div class="timeline-progress">
+                    ${i < currentLevel ? '✓ Completed' : 
+                      i === currentLevel ? 'In Progress' : 'Locked'}
+                </div>
+            </div>
+        `;
+        timeline.appendChild(timelineItem);
+    }
+}
+
+function appendActivityLog(message, type = 'info') {
+    const log = document.querySelector('.log-entries');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerHTML = `
+        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+        ${message}
+    `;
+    log.insertBefore(entry, log.firstChild);
+}
+
+function updateProgress(progress) {
+    const progressBar = document.getElementById('progressFill');
+    progressBar.style.width = `${progress}%`;
+    progressBar.setAttribute('aria-valuenow', progress);
+}
+
+function updateLevelIndicator(level) {
+    const levelElement = document.getElementById('levelIndicator');
+    levelElement.textContent = `Level ${level}`;
+    if (level > currentLevel) {
+        levelElement.classList.remove('alert-info');
+        levelElement.classList.add('alert-success');
+        setTimeout(() => {
+            levelElement.classList.remove('alert-success');
+            levelElement.classList.add('alert-info');
+        }, 1000);
+        currentLevel = level;
+    }
+}
 
 function updateTrainingChart(score) {
     if (!trainingChart) return;
@@ -312,35 +421,6 @@ function updateMemoryPatterns(patterns) {
     memoryChart.update();
     
     updatePatternGraph(memoryPatterns);
-}
-
-function updateProgress(progress) {
-    const progressBar = document.getElementById('progressFill');
-    progressBar.style.width = `${progress}%`;
-    progressBar.setAttribute('aria-valuenow', progress);
-}
-
-function updateLevelIndicator(level) {
-    const levelElement = document.getElementById('levelIndicator');
-    levelElement.textContent = `Level ${level}`;
-    if (level > currentLevel) {
-        levelElement.classList.remove('alert-info');
-        levelElement.classList.add('alert-success');
-        setTimeout(() => {
-            levelElement.classList.remove('alert-success');
-            levelElement.classList.add('alert-info');
-        }, 1000);
-        currentLevel = level;
-    }
-}
-
-function appendTrainingLog(message) {
-    const log = document.getElementById('trainingProgress');
-    const entry = document.createElement('div');
-    entry.className = 'log-entry';
-    entry.innerHTML = `<small class="text-muted">${new Date().toLocaleTimeString()}</small> ${message}`;
-    log.appendChild(entry);
-    log.scrollTop = log.scrollHeight;
 }
 
 function validateDataset(input, output) {
@@ -439,3 +519,43 @@ function startTraining() {
         })
     });
 }
+
+socket.on('training_progress', function(data) {
+    if (!trainingStartTime) {
+        trainingStartTime = Date.now();
+        appendActivityLog('Training started', 'info');
+    }
+    
+    updateTrainingStatus(data.operation || 'Processing', data.progress);
+    updateProgress(data.progress);
+    
+    trainingStats = {
+        successRate: data.score || 0,
+        patternDiversity: Object.keys(data.patterns || {}).length / 100,
+        iterations: data.iterations || 0
+    };
+    updateLevelProgress(trainingStats);
+    
+    if (data.level !== currentLevel) {
+        const levelIndicator = document.getElementById('levelIndicator');
+        levelIndicator.classList.add('level-transition');
+        setTimeout(() => levelIndicator.classList.remove('level-transition'), 1000);
+        
+        appendActivityLog(`Advanced to Level ${data.level}!`, 'success');
+        currentLevel = data.level;
+        updateTimeline();
+    }
+    
+    updateLevelIndicator(data.level);
+    updateTrainingChart(data.score);
+    updateMemoryPatterns(data.patterns);
+    
+    appendActivityLog(data.message);
+    
+    if (data.progress >= 100) {
+        trainingStartTime = null;
+        document.querySelector('#trainButton').disabled = false;
+        document.querySelector('.chat-interface').style.display = 'block';
+        appendActivityLog('Training completed!', 'success');
+    }
+});

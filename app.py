@@ -28,7 +28,6 @@ db.init_app(app)
 
 from models import TrainingData, AIMemory, Dataset, AIModel
 
-# Initialize AI Engine
 ai_engine = AIEngine()
 
 def require_api_key(f):
@@ -78,7 +77,7 @@ def search_huggingface_datasets():
                     "description": ds.description,
                     "downloads": ds.downloads,
                     "likes": ds.likes
-                } for ds in filtered_datasets[:10]  # Limit to 10 results
+                } for ds in filtered_datasets[:10]
             ]
         })
     except Exception as e:
@@ -87,7 +86,7 @@ def search_huggingface_datasets():
 @app.route('/api/datasets/huggingface/preview/<path:dataset_id>', methods=['GET'])
 def preview_huggingface_dataset(dataset_id):
     try:
-        dataset = load_dataset(dataset_id, split='train[:5]')  # Load first 5 examples
+        dataset = load_dataset(dataset_id, split='train[:5]')
         return jsonify({
             "samples": dataset[:5],
             "features": dataset.features
@@ -104,10 +103,8 @@ def import_huggingface_dataset():
         if not dataset_id:
             return jsonify({"error": "No dataset ID provided"}), 400
 
-        # Load first 100 examples from the dataset
         hf_dataset = load_dataset(dataset_id, split='train[:100]')
         
-        # Convert to our format and save
         dataset = Dataset(
             name=f"HuggingFace: {dataset_id}",
             version="1.0",
@@ -243,34 +240,56 @@ def handle_training(data):
             'level': current_level,
             'message': 'No training data provided',
             'score': 0,
-            'patterns': {}
+            'patterns': {},
+            'operation': 'Idle',
+            'iterations': 0
         })
         return
     
+    operations = [
+        'Analyzing input patterns',
+        'Learning letter combinations',
+        'Building pattern database',
+        'Optimizing neural pathways',
+        'Validating learned patterns'
+    ]
+    
     try:
+        total_operations = len(training_data) * len(operations)
+        operation_count = 0
+        
         for i, item in enumerate(training_data):
             if not item.get('input') or not item.get('output'):
                 continue
+            
+            for op_idx, operation in enumerate(operations):
+                operation_count += 1
+                overall_progress = (operation_count / total_operations) * 100
                 
-            score, message, patterns = ai_engine.train(item['input'], item['output'])
-            progress = ((i + 1) / len(training_data)) * 100
-            
-            memory = AIMemory(
-                pattern_type='basic',
-                pattern=item['input'],
-                confidence=score
-            )
-            db.session.add(memory)
-            db.session.commit()
-            
-            emit('training_progress', {
-                'progress': progress,
-                'level': ai_engine.current_level,
-                'message': message,
-                'score': score,
-                'patterns': patterns
-            })
-            
+                time.sleep(0.1)
+                
+                score, message, patterns = ai_engine.train(item['input'], item['output'])
+                
+                memory = AIMemory(
+                    pattern_type='basic',
+                    pattern=item['input'],
+                    confidence=score
+                )
+                db.session.add(memory)
+                db.session.commit()
+                
+                emit('training_progress', {
+                    'progress': overall_progress,
+                    'level': ai_engine.current_level,
+                    'message': f"{operation}: {message}",
+                    'score': score,
+                    'patterns': patterns,
+                    'operation': operation,
+                    'iterations': operation_count,
+                    'success_rate': score,
+                    'pattern_diversity': len(patterns) / max(1, len(training_data))
+                })
+                
     except Exception as e:
         db.session.rollback()
         emit('training_progress', {
@@ -278,7 +297,9 @@ def handle_training(data):
             'level': current_level,
             'message': f"Training error: {str(e)}",
             'score': 0,
-            'patterns': {}
+            'patterns': {},
+            'operation': 'Error',
+            'iterations': 0
         })
 
 @app.route('/api/chat', methods=['POST'])
