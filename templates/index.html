@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Progressive Learning AI System - An advanced AI training and management platform">
     <title>Progressive Learning AI System</title>
     
     <!-- Bootstrap CSS -->
@@ -24,483 +25,275 @@
 </head>
 <body data-bs-theme="dark">
     <!-- Theme Controls -->
-    <div class="theme-controls position-fixed top-0 end-0 m-3 d-flex align-items-center">
-        <button class="btn btn-outline-secondary" id="themeToggle">
-            <i class="bi bi-sun-fill" id="lightIcon"></i>
-            <i class="bi bi-moon-fill" id="darkIcon" style="display: none;"></i>
+    <div class="theme-controls position-fixed top-0 end-0 m-3 d-flex align-items-center" role="complementary" aria-label="Theme Controls">
+        <button class="btn btn-outline-secondary" id="themeToggle" aria-label="Toggle theme">
+            <i class="bi bi-sun-fill" id="lightIcon" aria-hidden="true"></i>
+            <i class="bi bi-moon-fill" id="darkIcon" style="display: none;" aria-hidden="true"></i>
         </button>
     </div>
 
     <div class="container-fluid px-4">
-        <header class="py-4">
+        <header class="py-4" role="banner">
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="display-4">Progressive Learning AI System</h1>
             </div>
         </header>
         
-        <nav class="navbar navbar-expand-lg mb-4">
+        <nav class="navbar navbar-expand-lg mb-4" role="navigation" aria-label="Main navigation">
             <div class="container-fluid p-0">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent" aria-controls="navContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navContent">
                     <div class="nav nav-tabs flex-column flex-lg-row w-100" id="nav-tab" role="tablist">
-                        <button class="nav-link active" id="nav-training-tab" data-bs-toggle="tab" data-bs-target="#nav-training" type="button" role="tab">Training</button>
-                        <button class="nav-link" id="nav-datasets-tab" data-bs-toggle="tab" data-bs-target="#nav-datasets" type="button" role="tab">Datasets</button>
-                        <button class="nav-link" id="nav-models-tab" data-bs-toggle="tab" data-bs-target="#nav-models" type="button" role="tab">Models</button>
-                        <button class="nav-link" id="nav-chat-tab" data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab">Chat</button>
+                        <button class="nav-link active" id="nav-training-tab" data-bs-toggle="tab" data-bs-target="#nav-training" type="button" role="tab" aria-controls="nav-training" aria-selected="true">Training</button>
+                        <button class="nav-link" id="nav-datasets-tab" data-bs-toggle="tab" data-bs-target="#nav-datasets" type="button" role="tab" aria-controls="nav-datasets" aria-selected="false">Datasets</button>
+                        <button class="nav-link" id="nav-models-tab" data-bs-toggle="tab" data-bs-target="#nav-models" type="button" role="tab" aria-controls="nav-models" aria-selected="false">Models</button>
+                        <button class="nav-link" id="nav-chat-tab" data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab" aria-controls="nav-chat" aria-selected="false">Chat</button>
                     </div>
                 </div>
             </div>
         </nav>
         
-        <div class="tab-content" id="nav-tabContent">
-            <!-- Training Interface -->
-            <div class="tab-pane fade show active" id="nav-training" role="tabpanel">
-                <div class="training-interface card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title h3 mb-4">Training Interface</h2>
-                        
-                        <!-- Real-time Status Panel -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">Current Status</h5>
-                                <div class="row g-3">
-                                    <div class="col-12 col-md-4">
-                                        <div class="status-item">
-                                            <label class="form-label">Operation:</label>
-                                            <div id="currentOperation" class="status-value">Idle</div>
+        <main role="main">
+            <div class="tab-content" id="nav-tabContent">
+                <!-- Training Interface -->
+                <div class="tab-pane fade show active" id="nav-training" role="tabpanel" aria-labelledby="nav-training-tab">
+                    <div class="training-interface card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title h3 mb-4">Training Interface</h2>
+                            
+                            <!-- Real-time Status Panel -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h3 class="card-title h5">Current Status</h3>
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-4">
+                                            <div class="status-item">
+                                                <label class="form-label" for="currentOperation">Operation:</label>
+                                                <div id="currentOperation" class="status-value" role="status" aria-live="polite">Idle</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-12 col-md-4">
-                                        <div class="status-item">
-                                            <label class="form-label">Progress:</label>
-                                            <div id="operationProgress" class="status-value">0%</div>
+                                        <div class="col-12 col-md-4">
+                                            <div class="status-item">
+                                                <label class="form-label" for="operationProgress">Progress:</label>
+                                                <div id="operationProgress" class="status-value" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-12 col-md-4">
-                                        <div class="status-item">
-                                            <label class="form-label">ETA:</label>
-                                            <div id="operationETA" class="status-value">--:--</div>
+                                        <div class="col-12 col-md-4">
+                                            <div class="status-item">
+                                                <label class="form-label" for="operationETA">ETA:</label>
+                                                <div id="operationETA" class="status-value" role="status" aria-live="polite">--:--</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Level Progress Panel -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">Level Progress</h5>
-                                <div id="levelRequirements" class="mb-3">
-                                    <div class="requirement-item mb-3">
-                                        <label class="form-label">Success Rate:</label>
-                                        <div class="progress">
-                                            <div id="successRateProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            <!-- Level Progress Panel -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h3 class="card-title h5">Level Progress</h3>
+                                    <div id="levelRequirements" class="mb-3">
+                                        <div class="requirement-item mb-3">
+                                            <label class="form-label" id="successRateLabel">Success Rate:</label>
+                                            <div class="progress" role="progressbar" aria-labelledby="successRateLabel">
+                                                <div id="successRateProgress" class="progress-bar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="requirement-item mb-3">
+                                            <label class="form-label" id="diversityLabel">Pattern Diversity:</label>
+                                            <div class="progress" role="progressbar" aria-labelledby="diversityLabel">
+                                                <div id="diversityProgress" class="progress-bar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="requirement-item mb-3">
+                                            <label class="form-label" id="iterationsLabel">Training Iterations:</label>
+                                            <div class="progress" role="progressbar" aria-labelledby="iterationsLabel">
+                                                <div id="iterationsProgress" class="progress-bar" style="width: 0%"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="requirement-item mb-3">
-                                        <label class="form-label">Pattern Diversity:</label>
-                                        <div class="progress">
-                                            <div id="diversityProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    <div id="levelObjectives" class="alert alert-info" role="status" aria-live="polite">
+                                        Current Level Objectives will appear here
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="datasets" class="mb-4" role="region" aria-label="Training Datasets"></div>
+                            <div class="btn-group mb-4" role="group" aria-label="Dataset Controls">
+                                <button class="btn btn-secondary" onclick="addDataset()" aria-label="Add new dataset">Add Dataset</button>
+                                <button class="btn btn-primary" id="trainButton" onclick="startTraining()" aria-label="Start training process">Start Training</button>
+                                <button class="btn btn-success" onclick="saveCurrentDataset()" aria-label="Save current dataset">Save Dataset</button>
+                            </div>
+
+                            <!-- Visualization Section -->
+                            <section aria-label="Training Visualizations">
+                                <div class="row g-4 mb-4">
+                                    <div class="col-12 col-lg-6">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h3 class="card-title h5">Training Progress</h3>
+                                                <canvas id="trainingChart" role="img" aria-label="Training progress chart"></canvas>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="requirement-item mb-3">
-                                        <label class="form-label">Training Iterations:</label>
-                                        <div class="progress">
-                                            <div id="iterationsProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    <div class="col-12 col-lg-6">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h3 class="card-title h5">Memory Patterns</h3>
+                                                <canvas id="memoryChart" role="img" aria-label="Memory patterns chart"></canvas>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="levelObjectives" class="alert alert-info">
-                                    Current Level Objectives will appear here
+                            </section>
+
+                            <!-- 3D Visualization -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h3 class="card-title h5">3D Pattern Visualization</h3>
+                                    <div id="advancedViz" class="advanced-viz" role="img" aria-label="3D pattern visualization"></div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div id="datasets" class="mb-4"></div>
-                        <div class="btn-group mb-4">
-                            <button class="btn btn-secondary" onclick="addDataset()">Add Dataset</button>
-                            <button class="btn btn-primary" id="trainButton" onclick="startTraining()">Start Training</button>
-                            <button class="btn btn-success" onclick="saveCurrentDataset()">Save Dataset</button>
-                        </div>
-
-                        <!-- Visualization Section -->
-                        <div class="row g-4 mb-4">
-                            <div class="col-12 col-lg-6">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Training Progress</h5>
-                                        <canvas id="trainingChart"></canvas>
+                            <!-- Activity Log -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title h5">Activity Log</h3>
+                                    <div id="trainingProgress" class="activity-log" role="log" aria-live="polite" aria-atomic="false">
+                                        <div class="log-entries"></div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Memory Patterns</h5>
-                                        <canvas id="memoryChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3D Visualization -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">3D Pattern Visualization</h5>
-                                <div id="advancedViz" class="advanced-viz"></div>
-                            </div>
-                        </div>
-
-                        <!-- Activity Log -->
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Activity Log</h5>
-                                <div id="trainingProgress" class="activity-log">
-                                    <div class="log-entries"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Datasets Management -->
-            <div class="tab-pane fade" id="nav-datasets" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title h3 mb-4">Dataset Management</h2>
-                        <div class="mb-4">
-                            <h3>HuggingFace Datasets</h3>
-                            <div class="input-group mb-3">
-                                <input type="text" id="huggingfaceSearch" class="form-control" placeholder="Search HuggingFace datasets...">
-                                <button class="btn btn-secondary" onclick="searchHuggingFaceDatasets()">Search</button>
+                <!-- Datasets Management -->
+                <div class="tab-pane fade" id="nav-datasets" role="tabpanel" aria-labelledby="nav-datasets-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title h3 mb-4">Dataset Management</h2>
+                            <div class="mb-4">
+                                <h3>HuggingFace Datasets</h3>
+                                <div class="input-group mb-3">
+                                    <input type="text" id="huggingfaceSearch" class="form-control" placeholder="Search HuggingFace datasets...">
+                                    <button class="btn btn-secondary" onclick="searchHuggingFaceDatasets()">Search</button>
+                                </div>
+                                <div id="huggingfaceResults" class="mb-3"></div>
                             </div>
-                            <div id="huggingfaceResults" class="mb-3"></div>
-                        </div>
-                        <div class="mb-3">
-                            <button class="btn btn-primary" onclick="showSaveDatasetModal()">Create New Dataset</button>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Version</th>
-                                        <th>Description</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="datasetsTable"></tbody>
-                            </table>
+                            <div class="mb-3">
+                                <button class="btn btn-primary" onclick="showSaveDatasetModal()">Create New Dataset</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Version</th>
+                                            <th>Description</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="datasetsTable"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Models Management -->
-            <div class="tab-pane fade" id="nav-models" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title h3 mb-4">Model Management</h2>
-                        <div class="mb-3">
-                            <div class="btn-group">
-                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    Save/Export Model
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="showSaveModelModal()">Save Locally</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="showGitHubExportModal()">Export to GitHub</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="downloadModelFile()">Download as File</a></li>
-                                </ul>
+                <!-- Models Management -->
+                <div class="tab-pane fade" id="nav-models" role="tabpanel" aria-labelledby="nav-models-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title h3 mb-4">Model Management</h2>
+                            <div class="mb-3">
+                                <div class="btn-group">
+                                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Save/Export Model
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="showSaveModelModal()">Save Locally</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="showGitHubExportModal()">Export to GitHub</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="downloadModelFile()">Download as File</a></li>
+                                    </ul>
+                                </div>
+                                <div class="btn-group ms-2">
+                                    <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Import Model
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="showImportModelModal()">Import from File</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="showHuggingFaceImportModal()">Import from HuggingFace</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="showGitHubImportModal()">Import from GitHub</a></li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div class="btn-group ms-2">
-                                <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    Import Model
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="showImportModelModal()">Import from File</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="showHuggingFaceImportModal()">Import from HuggingFace</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="showGitHubImportModal()">Import from GitHub</a></li>
-                                </ul>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Version</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modelsTable"></tbody>
+                                </table>
                             </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Version</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="modelsTable"></tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Chat Interface -->
-            <div class="tab-pane fade" id="nav-chat" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title h3 mb-4">Test AI</h2>
-                        <div id="aiResponse" class="chat-log border rounded p-3 mb-3" style="height: 400px; overflow-y: auto;"></div>
-                        <div class="input-group">
-                            <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
-                            <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                <!-- Chat Interface -->
+                <div class="tab-pane fade" id="nav-chat" role="tabpanel" aria-labelledby="nav-chat-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title h3 mb-4">Test AI</h2>
+                            <div id="aiResponse" class="chat-log border rounded p-3 mb-3" style="height: 400px; overflow-y: auto;"></div>
+                            <div class="input-group">
+                                <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
+                                <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- Save Dataset Modal -->
-    <div class="modal fade" id="saveDatasetModal" tabindex="-1">
+    <div class="modal fade" id="saveDatasetModal" tabindex="-1" aria-labelledby="saveDatasetModalLabel" aria-hidden="true" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Save Dataset</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h4 class="modal-title" id="saveDatasetModalLabel">Save Dataset</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Dataset Name</label>
-                        <input type="text" class="form-control" id="datasetName">
+                        <label class="form-label" for="datasetName">Dataset Name</label>
+                        <input type="text" class="form-control" id="datasetName" aria-required="true">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Version</label>
+                        <label class="form-label" for="datasetVersion">Version</label>
                         <input type="text" class="form-control" id="datasetVersion" value="1.0">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label" for="datasetDescription">Description</label>
                         <textarea class="form-control" id="datasetDescription"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveDataset()">Save</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDataset()">Save Dataset</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Save Model Modal -->
-    <div class="modal fade" id="saveModelModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Save Model</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Model Name</label>
-                        <input type="text" class="form-control" id="modelName">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Version</label>
-                        <input type="text" class="form-control" id="modelVersion" value="1.0">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveModel()">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Dataset Preview Modal -->
-    <div class="modal fade" id="datasetPreviewModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Dataset Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="previewContent"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="importDataset()">Import Dataset</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- API Key Modal -->
-    <div class="modal fade" id="apiKeyModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">API Key Generated</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-success">
-                        <strong>Success!</strong> Your API key has been generated.
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Your API Key (save this, it won't be shown again):</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="apiKeyDisplay" readonly>
-                            <button class="btn btn-secondary" onclick="copyApiKey()">Copy</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Import Model Modal -->
-    <div class="modal fade" id="importModelModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Import Model</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Select Model File</label>
-                        <input type="file" class="form-control" id="modelFileInput" accept=".json">
-                        <div class="form-text">Please select a valid model export file (.json)</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="importModel()">Import</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- HuggingFace Import Modal -->
-    <div class="modal fade" id="huggingFaceImportModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Import from HuggingFace</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <input type="text" class="form-control" id="huggingFaceSearch" placeholder="Search models...">
-                    </div>
-                    <div id="huggingFaceResults" class="list-group mb-3">
-                        <!-- Results will be populated here -->
-                    </div>
-                    <div class="progress d-none" id="hfImportProgress">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- GitHub Import/Export Modals -->
-    <div class="modal fade" id="githubImportModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Import from GitHub</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">GitHub Repository URL</label>
-                        <input type="text" class="form-control" id="githubRepoUrl" placeholder="https://github.com/username/repo">
-                    </div>
-                    <div class="progress d-none" id="githubImportProgress">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="importFromGitHub()">Import</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="githubExportModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Export to GitHub</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">GitHub Repository URL</label>
-                        <input type="text" class="form-control" id="githubExportRepoUrl" placeholder="https://github.com/username/repo">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Commit Message</label>
-                        <input type="text" class="form-control" id="githubCommitMessage" placeholder="Updated model">
-                    </div>
-                    <div class="progress d-none" id="githubExportProgress">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="exportToGitHub()">Export</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bulk Dataset Operations Modal -->
-    <div class="modal fade" id="bulkDatasetModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Bulk Dataset Operations</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Select Operation</label>
-                        <select class="form-select" id="bulkOperationType">
-                            <option value="import">Import Datasets</option>
-                            <option value="export">Export Selected Datasets</option>
-                        </select>
-                    </div>
-                    <div id="bulkImportSection">
-                        <input type="file" class="form-control" id="bulkDatasetFile" accept=".json">
-                    </div>
-                    <div id="bulkExportSection" style="display: none;">
-                        <div class="form-check mb-3" id="datasetCheckboxes">
-                            <!-- Checkboxes will be populated dynamically -->
-                        </div>
-                    </div>
-                    <div class="progress d-none" id="bulkOperationProgress">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="executeBulkOperation()">Execute</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 </body>
 </html>
