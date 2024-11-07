@@ -171,6 +171,187 @@ window.saveModel = function() {
     });
 };
 
+function showHuggingFaceImportModal() {
+    const modal = new bootstrap.Modal(document.getElementById('huggingFaceImportModal'));
+    modal.show();
+}
+
+function searchHuggingFaceModels() {
+    const query = document.getElementById('huggingFaceSearch').value;
+    const resultsContainer = document.getElementById('huggingFaceResults');
+    
+    resultsContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    fetch(`/api/models/huggingface/search?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                resultsContainer.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+            
+            if (data.models.length === 0) {
+                resultsContainer.innerHTML = '<div class="alert alert-info">No models found</div>';
+                return;
+            }
+            
+            resultsContainer.innerHTML = data.models.map(model => `
+                <div class="list-group-item">
+                    <h6 class="mb-1">${model.name}</h6>
+                    <p class="mb-1 small">${model.description || 'No description available'}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Downloads: ${model.downloads} | Likes: ${model.likes}
+                        </small>
+                        <button class="btn btn-sm btn-primary" onclick="importHuggingFaceModel('${model.id}')">Import</button>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            resultsContainer.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        });
+}
+
+function importHuggingFaceModel(modelId) {
+    const progressBar = document.getElementById('hfImportProgress');
+    progressBar.classList.remove('d-none');
+    
+    const apiKey = localStorage.getItem('current_api_key');
+    if (!apiKey) {
+        alert('Please generate an API key first');
+        return;
+    }
+    
+    fetch('/api/models/huggingface/import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+        },
+        body: JSON.stringify({ model_id: modelId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+            return;
+        }
+        
+        localStorage.setItem(`model_${data.model_id}_api_key`, data.api_key);
+        bootstrap.Modal.getInstance(document.getElementById('huggingFaceImportModal')).hide();
+        alert('Model imported successfully!');
+        loadModels();
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    })
+    .finally(() => {
+        progressBar.classList.add('d-none');
+    });
+}
+
+function showGitHubImportModal() {
+    const modal = new bootstrap.Modal(document.getElementById('githubImportModal'));
+    modal.show();
+}
+
+function showGitHubExportModal() {
+    const modal = new bootstrap.Modal(document.getElementById('githubExportModal'));
+    modal.show();
+}
+
+function importFromGitHub() {
+    const repoUrl = document.getElementById('githubRepoUrl').value;
+    if (!repoUrl) {
+        alert('Please enter a GitHub repository URL');
+        return;
+    }
+    
+    const progressBar = document.getElementById('githubImportProgress');
+    progressBar.classList.remove('d-none');
+    
+    const apiKey = localStorage.getItem('current_api_key');
+    if (!apiKey) {
+        alert('Please generate an API key first');
+        return;
+    }
+    
+    fetch('/api/models/github/import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+        },
+        body: JSON.stringify({ repo_url: repoUrl })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+            return;
+        }
+        
+        localStorage.setItem(`model_${data.model_id}_api_key`, data.api_key);
+        bootstrap.Modal.getInstance(document.getElementById('githubImportModal')).hide();
+        alert('Model imported successfully!');
+        loadModels();
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    })
+    .finally(() => {
+        progressBar.classList.add('d-none');
+    });
+}
+
+function exportToGitHub() {
+    const repoUrl = document.getElementById('githubExportRepoUrl').value;
+    const commitMessage = document.getElementById('githubCommitMessage').value;
+    
+    if (!repoUrl) {
+        alert('Please enter a GitHub repository URL');
+        return;
+    }
+    
+    const progressBar = document.getElementById('githubExportProgress');
+    progressBar.classList.remove('d-none');
+    
+    const apiKey = localStorage.getItem('current_api_key');
+    if (!apiKey) {
+        alert('Please generate an API key first');
+        return;
+    }
+    
+    fetch('/api/models/github/export', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+        },
+        body: JSON.stringify({
+            repo_url: repoUrl,
+            commit_message: commitMessage
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(`Error: ${data.error}`);
+            return;
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('githubExportModal')).hide();
+        alert('Model exported successfully!');
+    })
+    .catch(error => {
+        alert(`Error: ${error.message}`);
+    })
+    .finally(() => {
+        progressBar.classList.add('d-none');
+    });
+}
+
 function showImportModelModal() {
     const modal = new bootstrap.Modal(document.getElementById('importModelModal'));
     modal.show();
@@ -226,14 +407,20 @@ function importModel() {
     });
 }
 
-function exportModel(id) {
-    const apiKey = localStorage.getItem(`model_${id}_api_key`);
+function downloadModelFile() {
+    const currentModelId = document.querySelector('#modelsTable tr[data-selected="true"]')?.dataset.modelId;
+    if (!currentModelId) {
+        alert('Please select a model to download');
+        return;
+    }
+    
+    const apiKey = localStorage.getItem(`model_${currentModelId}_api_key`);
     if (!apiKey) {
         alert('API key not found for this model');
         return;
     }
     
-    fetch(`/api/models/${id}/export`, {
+    fetch(`/api/models/${currentModelId}/export`, {
         headers: {
             'X-API-Key': apiKey
         }
@@ -248,7 +435,7 @@ function exportModel(id) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `model_${id}_export.json`;
+        a.download = `model_${currentModelId}_export.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -258,3 +445,9 @@ function exportModel(id) {
         alert(`Error exporting model: ${error.message}`);
     });
 }
+
+document.getElementById('huggingFaceSearch')?.addEventListener('input', (e) => {
+    if (e.target.value.length >= 3) {
+        searchHuggingFaceModels();
+    }
+});

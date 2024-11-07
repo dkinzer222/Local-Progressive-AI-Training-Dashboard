@@ -2,6 +2,7 @@ from app import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+import json
 
 class TrainingData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,6 +31,17 @@ class Dataset(db.Model):
     def __repr__(self):
         return f'<Dataset {self.name} v{self.version}>'
 
+    def to_dict(self):
+        """Convert dataset to dictionary for serialization"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'description': self.description,
+            'created_at': self.created_at.isoformat(),
+            'data': self.data
+        }
+
 class AIModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -52,3 +64,65 @@ class AIModel(db.Model):
     
     def __repr__(self):
         return f'<AIModel {self.name} v{self.version}>'
+    
+    def to_dict(self):
+        """Convert model to dictionary for serialization"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'created_at': self.created_at.isoformat(),
+            'configuration': self.configuration,
+            'state': self.state,
+            'datasets': [ds.to_dict() for ds in self.datasets]
+        }
+    
+    @staticmethod
+    def from_dict(data):
+        """Create model from dictionary"""
+        model = AIModel(
+            name=data['name'],
+            version=data.get('version', '1.0'),
+            configuration=data.get('configuration', {}),
+            state=data.get('state', {})
+        )
+        
+        # Import associated datasets
+        if 'datasets' in data:
+            for ds_data in data['datasets']:
+                dataset = Dataset(
+                    name=ds_data['name'],
+                    version=ds_data['version'],
+                    description=ds_data.get('description', ''),
+                    data=ds_data['data']
+                )
+                model.datasets.append(dataset)
+        
+        return model
+    
+    def serialize_state(self):
+        """Serialize model state for export"""
+        try:
+            return {
+                'model_info': self.to_dict(),
+                'metadata': {
+                    'export_date': datetime.utcnow().isoformat(),
+                    'format_version': '1.0'
+                }
+            }
+        except Exception as e:
+            raise ValueError(f"Error serializing model state: {str(e)}")
+    
+    @staticmethod
+    def validate_import_data(data):
+        """Validate import data structure"""
+        required_fields = ['model_info', 'metadata']
+        if not all(field in data for field in required_fields):
+            raise ValueError("Invalid model file format: missing required fields")
+            
+        model_info = data['model_info']
+        required_model_fields = ['name', 'version', 'configuration', 'state']
+        if not all(field in model_info for field in required_model_fields):
+            raise ValueError("Invalid model info format: missing required fields")
+            
+        return True

@@ -4,13 +4,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 from sqlalchemy.orm import DeclarativeBase
 from utils.ai_engine import AIEngine
-import json
+import json, requests
 from functools import wraps
 from datasets import load_dataset
-from huggingface_hub import list_datasets
+from huggingface_hub import list_datasets, HfApi, Repository
+from huggingface_hub.utils import RepositoryNotFoundError
 import time
 from werkzeug.utils import secure_filename
 import tempfile
+from github import Github
+import base64
 
 class Base(DeclarativeBase):
     pass
@@ -31,6 +34,7 @@ db.init_app(app)
 from models import TrainingData, AIMemory, Dataset, AIModel
 
 ai_engine = AIEngine()
+hf_api = HfApi()
 
 def require_api_key(f):
     @wraps(f)
@@ -51,79 +55,11 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/datasets', methods=['GET'])
-def list_local_datasets():
+def list_datasets():
     datasets = Dataset.query.all()
     return jsonify({
-        "datasets": [
-            {
-                "id": ds.id,
-                "name": ds.name,
-                "version": ds.version,
-                "description": ds.description,
-                "created_at": ds.created_at.isoformat()
-            } for ds in datasets
-        ]
+        "datasets": [dataset.to_dict() for dataset in datasets]
     })
-
-@app.route('/api/datasets/huggingface/search', methods=['GET'])
-def search_huggingface_datasets():
-    query = request.args.get('query', '')
-    try:
-        datasets = list_datasets()
-        filtered_datasets = [ds for ds in datasets if query.lower() in ds.id.lower()]
-        return jsonify({
-            "datasets": [
-                {
-                    "id": ds.id,
-                    "name": ds.id.split('/')[-1],
-                    "description": ds.description,
-                    "downloads": ds.downloads,
-                    "likes": ds.likes
-                } for ds in filtered_datasets[:10]
-            ]
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/datasets/huggingface/preview/<path:dataset_id>', methods=['GET'])
-def preview_huggingface_dataset(dataset_id):
-    try:
-        dataset = load_dataset(dataset_id, split='train[:5]')
-        return jsonify({
-            "samples": dataset[:5],
-            "features": dataset.features
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/datasets/huggingface/import', methods=['POST'])
-@require_api_key
-def import_huggingface_dataset():
-    data = request.json
-    try:
-        dataset_id = data.get('dataset_id')
-        if not dataset_id:
-            return jsonify({"error": "No dataset ID provided"}), 400
-
-        hf_dataset = load_dataset(dataset_id, split='train[:100]')
-        
-        dataset = Dataset(
-            name=f"HuggingFace: {dataset_id}",
-            version="1.0",
-            description=f"Imported from HuggingFace: {dataset_id}",
-            data=hf_dataset[:100]
-        )
-        db.session.add(dataset)
-        db.session.commit()
-        
-        return jsonify({
-            "status": "success",
-            "dataset_id": dataset.id,
-            "message": f"Successfully imported {dataset_id}"
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/datasets', methods=['POST'])
 def create_dataset():
@@ -137,6 +73,7 @@ def create_dataset():
         )
         db.session.add(dataset)
         db.session.commit()
+        
         return jsonify({
             "status": "success",
             "dataset_id": dataset.id
@@ -145,18 +82,16 @@ def create_dataset():
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
 
+@app.route('/api/datasets/<int:dataset_id>', methods=['GET'])
+def get_dataset(dataset_id):
+    dataset = Dataset.query.get_or_404(dataset_id)
+    return jsonify(dataset.to_dict())
+
 @app.route('/api/models', methods=['GET'])
 def list_models():
     models = AIModel.query.all()
     return jsonify({
-        "models": [
-            {
-                "id": model.id,
-                "name": model.name,
-                "version": model.version,
-                "created_at": model.created_at.isoformat()
-            } for model in models
-        ]
+        "models": [model.to_dict() for model in models]
     })
 
 @app.route('/api/models', methods=['POST'])
@@ -172,6 +107,7 @@ def create_model():
         api_key = model.set_api_key()
         db.session.add(model)
         db.session.commit()
+        
         return jsonify({
             "status": "success",
             "model_id": model.id,
@@ -186,22 +122,11 @@ def create_model():
 def export_model(model_id):
     try:
         model = AIModel.query.get_or_404(model_id)
-        
-        export_data = {
-            "name": model.name,
-            "version": model.version,
-            "created_at": model.created_at.isoformat(),
-            "configuration": model.configuration,
-            "state": model.state,
-            "metadata": {
-                "export_date": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "format_version": "1.0"
-            }
-        }
+        export_data = model.serialize_state()
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
             json.dump(export_data, tmp, indent=2)
-        
+            
         response = send_file(
             tmp.name,
             mimetype='application/json',
@@ -234,17 +159,10 @@ def import_model():
         
         try:
             import_data = json.load(file)
-            required_fields = ['name', 'version', 'configuration', 'state']
-            if not all(field in import_data for field in required_fields):
-                return jsonify({"error": "Invalid model file format"}), 400
-                
-            model = AIModel(
-                name=f"{import_data['name']} (Imported)",
-                version=import_data['version'],
-                configuration=import_data['configuration'],
-                state=import_data['state']
-            )
+            AIModel.validate_import_data(import_data)
             
+            model_info = import_data['model_info']
+            model = AIModel.from_dict(model_info)
             api_key = model.set_api_key()
             
             db.session.add(model)
@@ -259,141 +177,105 @@ def import_model():
             
         except json.JSONDecodeError:
             return jsonify({"error": "Invalid JSON file"}), 400
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
             
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/train', methods=['POST'])
-def train():
+@app.route('/api/models/github/import', methods=['POST'])
+@require_api_key
+def import_github_model():
     data = request.json
-    if 'training_data' not in data:
-        return jsonify({"status": "error", "message": "No training data provided"}), 400
-    
-    results = []
     try:
-        for item in data['training_data']:
-            if not item.get('input') or not item.get('output'):
-                continue
-                
-            training_data = TrainingData(
-                input_text=item['input'],
-                expected_output=item['output'],
-                level=data.get('level', 1)
-            )
-            db.session.add(training_data)
+        repo_url = data.get('repo_url')
+        if not repo_url:
+            return jsonify({"error": "No repository URL provided"}), 400
             
-            score, message, patterns = ai_engine.train(item['input'], item['output'])
-            training_data.score = score
-            results.append({
-                "score": score,
-                "message": message,
-                "patterns": patterns
-            })
+        github_token = os.environ.get('GITHUB_TOKEN')
+        if not github_token:
+            return jsonify({"error": "GitHub token not configured"}), 500
+            
+        g = Github(github_token)
+        repo = g.get_repo(repo_url.split('github.com/')[-1])
         
+        model_files = {}
+        for content in repo.get_contents(""):
+            if content.path.endswith(('.json', '.h5', '.pt', '.ckpt')):
+                model_files[content.path] = base64.b64decode(content.content)
+                
+        model = AIModel(
+            name=f"GitHub: {repo.name}",
+            version="1.0",
+            configuration={
+                "source": "github",
+                "repo_url": repo_url,
+                "files": list(model_files.keys())
+            },
+            state=model_files
+        )
+        
+        api_key = model.set_api_key()
+        db.session.add(model)
         db.session.commit()
+        
         return jsonify({
             "status": "success",
-            "results": results
+            "model_id": model.id,
+            "api_key": api_key
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({
-            "status": "error",
-            "message": f"Training error: {str(e)}"
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
-@socketio.on('start_training')
-def handle_training(data):
-    current_level = data.get('current_level', 1)
-    training_data = data.get('data', [])
-    
-    if not training_data:
-        emit('training_progress', {
-            'progress': 0,
-            'level': current_level,
-            'message': 'No training data provided',
-            'score': 0,
-            'patterns': {},
-            'operation': 'Idle',
-            'iterations': 0
-        })
-        return
-    
-    operations = [
-        'Analyzing input patterns',
-        'Learning letter combinations',
-        'Building pattern database',
-        'Optimizing neural pathways',
-        'Validating learned patterns'
-    ]
-    
+@app.route('/api/models/github/export', methods=['POST'])
+@require_api_key
+def export_github_model():
+    data = request.json
     try:
-        total_operations = len(training_data) * len(operations)
-        operation_count = 0
+        model_id = data.get('model_id')
+        repo_url = data.get('repo_url')
+        commit_message = data.get('commit_message', 'Updated model')
         
-        for i, item in enumerate(training_data):
-            if not item.get('input') or not item.get('output'):
-                continue
+        if not model_id or not repo_url:
+            return jsonify({"error": "Missing required parameters"}), 400
             
-            for op_idx, operation in enumerate(operations):
-                operation_count += 1
-                overall_progress = (operation_count / total_operations) * 100
-                
-                time.sleep(0.1)
-                
-                score, message, patterns = ai_engine.train(item['input'], item['output'])
-                
-                memory = AIMemory(
-                    pattern_type='basic',
-                    pattern=item['input'],
-                    confidence=score
-                )
-                db.session.add(memory)
-                db.session.commit()
-                
-                emit('training_progress', {
-                    'progress': overall_progress,
-                    'level': ai_engine.current_level,
-                    'message': f"{operation}: {message}",
-                    'score': score,
-                    'patterns': patterns,
-                    'operation': operation,
-                    'iterations': operation_count,
-                    'success_rate': score,
-                    'pattern_diversity': len(patterns) / max(1, len(training_data))
-                })
-                
-    except Exception as e:
-        db.session.rollback()
-        emit('training_progress', {
-            'progress': 100,
-            'level': current_level,
-            'message': f"Training error: {str(e)}",
-            'score': 0,
-            'patterns': {},
-            'operation': 'Error',
-            'iterations': 0
-        })
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    try:
-        user_input = request.json.get('message', '')
-        if not user_input:
-            return jsonify({"response": "Please provide a message"}), 400
+        github_token = os.environ.get('GITHUB_TOKEN')
+        if not github_token:
+            return jsonify({"error": "GitHub token not configured"}), 500
             
-        response, confidence = ai_engine.generate_response(user_input)
+        model = AIModel.query.get_or_404(model_id)
+        g = Github(github_token)
+        repo = g.get_repo(repo_url.split('github.com/')[-1])
+        
+        # Export model files
+        for filename, content in model.state.items():
+            if isinstance(content, (str, bytes)):
+                try:
+                    repo.create_file(
+                        filename,
+                        commit_message,
+                        content if isinstance(content, bytes) else content.encode(),
+                        branch="main"
+                    )
+                except Exception as e:
+                    # Update file if it already exists
+                    contents = repo.get_contents(filename)
+                    repo.update_file(
+                        contents.path,
+                        commit_message,
+                        content if isinstance(content, bytes) else content.encode(),
+                        contents.sha,
+                        branch="main"
+                    )
         
         return jsonify({
-            "response": response,
-            "confidence": confidence
+            "status": "success",
+            "message": "Model exported to GitHub successfully"
         })
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"Chat error: {str(e)}"
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 with app.app_context():
     db.create_all()
