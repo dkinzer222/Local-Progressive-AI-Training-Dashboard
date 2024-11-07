@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
     loadDatasets();
     loadModels();
+    initAdvancedViz();
+});
+
+window.addEventListener('beforeunload', function() {
+    cleanupViz();
 });
 
 function initializeCharts() {
@@ -250,19 +255,25 @@ function updateTrainingChart(score) {
 }
 
 function updateMemoryPatterns(patterns) {
-    if (!memoryChart || !patterns) return;
+    if (!patterns) return;
     
-    Object.entries(patterns).forEach(([pattern, confidence]) => {
-        memoryPatterns.set(pattern, confidence);
-    });
+    // Update 2D chart
+    if (memoryChart) {
+        Object.entries(patterns).forEach(([pattern, confidence]) => {
+            memoryPatterns.set(pattern, confidence);
+        });
+        
+        const sortedPatterns = Array.from(memoryPatterns.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+        
+        memoryChart.data.labels = sortedPatterns.map(([pattern]) => pattern);
+        memoryChart.data.datasets[0].data = sortedPatterns.map(([_, confidence]) => confidence);
+        memoryChart.update();
+    }
     
-    const sortedPatterns = Array.from(memoryPatterns.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
-    
-    memoryChart.data.labels = sortedPatterns.map(([pattern]) => pattern);
-    memoryChart.data.datasets[0].data = sortedPatterns.map(([_, confidence]) => confidence);
-    memoryChart.update();
+    // Update 3D visualization
+    updatePatternGraph(memoryPatterns);
 }
 
 function updateProgress(progress) {

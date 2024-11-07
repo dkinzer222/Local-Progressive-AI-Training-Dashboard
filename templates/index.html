@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="{{ url_for('static', filename='js/advanced-viz.js') }}"></script>
     <script src="{{ url_for('static', filename='js/training.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </head>
@@ -44,7 +46,7 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Training Visualization</h5>
+                                    <h5 class="card-title">Training Progress</h5>
                                     <canvas id="trainingChart" width="400" height="200"></canvas>
                                 </div>
                             </div>
@@ -54,6 +56,17 @@
                                 <div class="card-body">
                                     <h5 class="card-title">Memory Patterns</h5>
                                     <canvas id="memoryChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">3D Pattern Visualization</h5>
+                                    <div id="advancedViz" class="advanced-viz"></div>
                                 </div>
                             </div>
                         </div>
