@@ -13,52 +13,175 @@
     <div class="container">
         <h1 class="mt-4 mb-4">Progressive Learning AI System</h1>
         
-        <div class="training-interface card p-4 mb-4">
-            <h2>Training Interface</h2>
-            <div id="datasets" class="mb-3"></div>
-            <div class="btn-group mb-3">
-                <button class="btn btn-secondary" onclick="addDataset()">Add Dataset</button>
-                <button class="btn btn-primary" id="trainButton" onclick="startTraining()">Start Training</button>
+        <nav>
+            <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-training-tab" data-bs-toggle="tab" data-bs-target="#nav-training" type="button" role="tab">Training</button>
+                <button class="nav-link" id="nav-datasets-tab" data-bs-toggle="tab" data-bs-target="#nav-datasets" type="button" role="tab">Datasets</button>
+                <button class="nav-link" id="nav-models-tab" data-bs-toggle="tab" data-bs-target="#nav-models" type="button" role="tab">Models</button>
+                <button class="nav-link" id="nav-chat-tab" data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab">Chat</button>
             </div>
-            
-            <div class="progress mb-3">
-                <div id="progressFill" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-            
-            <div id="levelIndicator" class="alert alert-info">Level 1</div>
-            
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Training Visualization</h5>
-                            <canvas id="trainingChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Memory Patterns</h5>
-                            <canvas id="memoryChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="trainingProgress" class="training-log border p-3">
-                <h3>Training Progress:</h3>
-            </div>
-        </div>
+        </nav>
         
-        <div class="chat-interface card p-4">
-            <h2>Test AI</h2>
-            <div id="aiResponse" class="chat-log border p-3 mb-3" style="height: 200px; overflow-y: auto;"></div>
-            <div class="input-group">
-                <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
-                <button class="btn btn-secondary" onclick="sendMessage()">Send</button>
+        <div class="tab-content" id="nav-tabContent">
+            <!-- Training Interface -->
+            <div class="tab-pane fade show active" id="nav-training" role="tabpanel">
+                <div class="training-interface card p-4 mb-4">
+                    <h2>Training Interface</h2>
+                    <div id="datasets" class="mb-3"></div>
+                    <div class="btn-group mb-3">
+                        <button class="btn btn-secondary" onclick="addDataset()">Add Dataset</button>
+                        <button class="btn btn-primary" id="trainButton" onclick="startTraining()">Start Training</button>
+                        <button class="btn btn-success" onclick="saveCurrentDataset()">Save Dataset</button>
+                    </div>
+                    
+                    <div class="progress mb-3">
+                        <div id="progressFill" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    
+                    <div id="levelIndicator" class="alert alert-info">Level 1</div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Training Visualization</h5>
+                                    <canvas id="trainingChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Memory Patterns</h5>
+                                    <canvas id="memoryChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="trainingProgress" class="training-log border p-3">
+                        <h3>Training Progress:</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Datasets Management -->
+            <div class="tab-pane fade" id="nav-datasets" role="tabpanel">
+                <div class="card p-4">
+                    <h2>Dataset Management</h2>
+                    <div class="mb-3">
+                        <button class="btn btn-primary" onclick="showSaveDatasetModal()">Create New Dataset</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Version</th>
+                                    <th>Description</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="datasetsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Models Management -->
+            <div class="tab-pane fade" id="nav-models" role="tabpanel">
+                <div class="card p-4">
+                    <h2>Model Management</h2>
+                    <div class="mb-3">
+                        <button class="btn btn-primary" onclick="showSaveModelModal()">Save Current Model</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Version</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modelsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Interface -->
+            <div class="tab-pane fade" id="nav-chat" role="tabpanel">
+                <div class="chat-interface card p-4">
+                    <h2>Test AI</h2>
+                    <div id="aiResponse" class="chat-log border p-3 mb-3" style="height: 200px; overflow-y: auto;"></div>
+                    <div class="input-group">
+                        <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
+                        <button class="btn btn-secondary" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    
+    <!-- Save Dataset Modal -->
+    <div class="modal fade" id="saveDatasetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save Dataset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Dataset Name</label>
+                        <input type="text" class="form-control" id="datasetName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Version</label>
+                        <input type="text" class="form-control" id="datasetVersion" value="1.0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="datasetDescription"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDataset()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Model Modal -->
+    <div class="modal fade" id="saveModelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save Model</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Model Name</label>
+                        <input type="text" class="form-control" id="modelName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Version</label>
+                        <input type="text" class="form-control" id="modelVersion" value="1.0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveModel()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
