@@ -1,9 +1,9 @@
 // Global error handling utilities
-const handleError = (error, context = '') => {
+export function handleError(error, context = '') {
     console.error(`Error${context ? ` in ${context}` : ''}: `, error);
     // You can add UI notification here if needed
     return { error: error.message || 'An unexpected error occurred' };
-};
+}
 
 // Global promise rejection handler
 window.addEventListener('unhandledrejection', event => {
@@ -12,7 +12,7 @@ window.addEventListener('unhandledrejection', event => {
 });
 
 // Utility function for making API calls
-async function apiCall(url, options = {}) {
+export async function apiCall(url, options = {}) {
     try {
         const response = await fetch(url, {
             ...options,
@@ -31,9 +31,3 @@ async function apiCall(url, options = {}) {
         return handleError(error, `API call to ${url}`);
     }
 }
-
-// Export utilities
-export {
-    handleError,
-    apiCall
-};

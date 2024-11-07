@@ -1,5 +1,4 @@
-import * as utils from './utilities.js';
-const { handleError, apiCall } = utils;
+import { handleError, apiCall } from './utilities.js';
 
 let currentLevel = 1;
 let trainingData = [];
