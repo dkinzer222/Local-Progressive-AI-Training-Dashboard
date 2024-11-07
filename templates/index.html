@@ -2,37 +2,42 @@
 <html>
 <head>
     <title>Progressive Learning AI System</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="{{ url_for('static', filename='js/training.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </head>
-<body>
+<body data-bs-theme="dark">
     <div class="container">
-        <h1>Progressive Learning AI System</h1>
+        <h1 class="mt-4 mb-4">Progressive Learning AI System</h1>
         
-        <div class="training-interface">
+        <div class="training-interface card p-4 mb-4">
             <h2>Training Interface</h2>
-            <div id="datasets"></div>
-            <button onclick="addDataset()">Add Dataset</button>
-            <button onclick="startTraining()">Start Training</button>
-            
-            <div class="progress-bar">
-                <div id="progressFill" class="progress-fill"></div>
+            <div id="datasets" class="mb-3"></div>
+            <div class="btn-group mb-3">
+                <button class="btn btn-secondary" onclick="addDataset()">Add Dataset</button>
+                <button class="btn btn-primary" onclick="startTraining()">Start Training</button>
             </div>
             
-            <div id="levelIndicator">Level 1</div>
+            <div class="progress mb-3">
+                <div id="progressFill" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
             
-            <div id="trainingProgress" class="training-log">
+            <div id="levelIndicator" class="alert alert-info">Level 1</div>
+            
+            <div id="trainingProgress" class="training-log border p-3">
                 <h3>Training Progress:</h3>
             </div>
         </div>
         
-        <div class="chat-interface">
+        <div class="chat-interface card p-4">
             <h2>Test AI</h2>
-            <div id="aiResponse" class="chat-log"></div>
-            <input type="text" id="userInput" placeholder="Type your message...">
-            <button onclick="sendMessage()">Send</button>
+            <div id="aiResponse" class="chat-log border p-3 mb-3" style="height: 200px; overflow-y: auto;"></div>
+            <div class="input-group">
+                <input type="text" id="userInput" class="form-control" placeholder="Type your message...">
+                <button class="btn btn-secondary" onclick="sendMessage()">Send</button>
+            </div>
         </div>
     </div>
 </body>
