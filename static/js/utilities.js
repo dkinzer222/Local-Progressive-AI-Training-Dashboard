@@ -1,8 +1,28 @@
 // Global error handling utilities
 export const handleError = (error, context = '') => {
-    console.error(`Error${context ? ` in ${context}` : ''}: `, error);
-    // You can add UI notification here if needed
-    return { error: error.message || 'An unexpected error occurred' };
+    const errorMessage = error.message || 'An unexpected error occurred';
+    const fullMessage = `Error${context ? ` in ${context}` : ''}: ${errorMessage}`;
+    
+    // Create error announcement for screen readers
+    const errorAnnouncement = document.createElement('div');
+    errorAnnouncement.setAttribute('role', 'alert');
+    errorAnnouncement.setAttribute('aria-live', 'assertive');
+    errorAnnouncement.className = 'sr-only error-message';
+    errorAnnouncement.textContent = fullMessage;
+    document.body.appendChild(errorAnnouncement);
+    
+    // Remove after screen reader has time to announce
+    setTimeout(() => errorAnnouncement.remove(), 3000);
+    
+    // Log error for debugging
+    console.error(fullMessage, error);
+    
+    return {
+        error: errorMessage,
+        context,
+        timestamp: new Date().toISOString(),
+        details: error.stack
+    };
 };
 
 // Global promise rejection handler
@@ -11,7 +31,7 @@ window.addEventListener('unhandledrejection', event => {
     handleError(event.reason, 'Unhandled Promise');
 });
 
-// Utility function for making API calls
+// Utility function for making API calls with enhanced error handling
 export const apiCall = async (url, options = {}) => {
     try {
         const response = await fetch(url, {
@@ -23,10 +43,24 @@ export const apiCall = async (url, options = {}) => {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        
+        // Announce success for important operations
+        if (options.announceSuccess) {
+            const successAnnouncement = document.createElement('div');
+            successAnnouncement.setAttribute('role', 'status');
+            successAnnouncement.setAttribute('aria-live', 'polite');
+            successAnnouncement.className = 'sr-only';
+            successAnnouncement.textContent = options.successMessage || 'Operation completed successfully';
+            document.body.appendChild(successAnnouncement);
+            setTimeout(() => successAnnouncement.remove(), 1000);
+        }
+        
+        return data;
     } catch (error) {
         return handleError(error, `API call to ${url}`);
     }
