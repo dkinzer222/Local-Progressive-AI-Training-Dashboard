@@ -6,11 +6,31 @@ let memoryChart = null;
 let trainingScores = [];
 let memoryPatterns = new Map();
 
+const exampleDatasets = [
+    {
+        input: "Hello",
+        output: "Hi there!"
+    },
+    {
+        input: "What's the weather like?",
+        output: "It's sunny and warm today!"
+    },
+    {
+        input: "Can you help me solve this math problem?",
+        output: "I'll guide you through the solution step by step."
+    },
+    {
+        input: "Tell me about machine learning",
+        output: "Machine learning is a branch of AI that enables systems to learn from data."
+    }
+];
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
     loadDatasets();
     loadModels();
     initAdvancedViz();
+    loadExampleDatasets();
 });
 
 window.addEventListener('beforeunload', function() {
@@ -87,6 +107,28 @@ function loadDatasets() {
                 tbody.appendChild(row);
             });
         });
+}
+
+function loadExampleDatasets() {
+    const container = document.getElementById('datasets');
+    container.innerHTML = ''; // Clear existing datasets
+    
+    exampleDatasets.forEach((dataset, index) => {
+        const datasetId = index + 1;
+        const datasetDiv = document.createElement('div');
+        datasetDiv.className = 'dataset card p-3 mb-3';
+        datasetDiv.innerHTML = `
+            <h3 class="h5">Dataset ${datasetId}</h3>
+            <div class="mb-3">
+                <input type="text" class="form-control mb-2" id="input-${datasetId}" value="${dataset.input}" placeholder="Input text...">
+                <div class="invalid-feedback" id="input-error-${datasetId}"></div>
+                <input type="text" class="form-control" id="output-${datasetId}" value="${dataset.output}" placeholder="Expected output...">
+                <div class="invalid-feedback" id="output-error-${datasetId}"></div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="removeDataset(this)">Remove</button>
+        `;
+        container.appendChild(datasetDiv);
+    });
 }
 
 function showSaveDatasetModal() {
@@ -257,22 +299,18 @@ function updateTrainingChart(score) {
 function updateMemoryPatterns(patterns) {
     if (!patterns) return;
     
-    // Update 2D chart
-    if (memoryChart) {
-        Object.entries(patterns).forEach(([pattern, confidence]) => {
-            memoryPatterns.set(pattern, confidence);
-        });
-        
-        const sortedPatterns = Array.from(memoryPatterns.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10);
-        
-        memoryChart.data.labels = sortedPatterns.map(([pattern]) => pattern);
-        memoryChart.data.datasets[0].data = sortedPatterns.map(([_, confidence]) => confidence);
-        memoryChart.update();
-    }
+    Object.entries(patterns).forEach(([pattern, confidence]) => {
+        memoryPatterns.set(pattern, confidence);
+    });
     
-    // Update 3D visualization
+    const sortedPatterns = Array.from(memoryPatterns.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    memoryChart.data.labels = sortedPatterns.map(([pattern]) => pattern);
+    memoryChart.data.datasets[0].data = sortedPatterns.map(([_, confidence]) => confidence);
+    memoryChart.update();
+    
     updatePatternGraph(memoryPatterns);
 }
 
