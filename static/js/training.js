@@ -1,4 +1,4 @@
-import { handleError, apiCall } from './utilities.js';
+import { handleError, apiCall } from '/static/js/utilities.js';
 
 let currentLevel = 1;
 let trainingData = [];
