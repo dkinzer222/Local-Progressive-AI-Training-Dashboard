@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Progressive Learning AI System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/training.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Progressive Learning AI System</h1>
+        
+        <div class="training-interface">
+            <h2>Training Interface</h2>
+            <div id="datasets"></div>
+            <button onclick="addDataset()">Add Dataset</button>
+            <button onclick="startTraining()">Start Training</button>
+            
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            
+            <div id="levelIndicator">Level 1</div>
+            
+            <div id="trainingProgress" class="training-log">
+                <h3>Training Progress:</h3>
+            </div>
+        </div>
+        
+        <div class="chat-interface">
+            <h2>Test AI</h2>
+            <div id="aiResponse" class="chat-log"></div>
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</body>
+</html>
