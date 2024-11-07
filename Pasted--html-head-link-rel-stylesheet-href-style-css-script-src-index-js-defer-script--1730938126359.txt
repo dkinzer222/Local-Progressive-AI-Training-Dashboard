@@ -1,0 +1,157 @@
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+  <script src="index.js" defer></script>
+</head>
+<body>
+  <div class="Wrapper">
+    <div class="Handler"></div>
+    <div class="overlay onClick="Lightbox.isOpen=false"></div>
+    <div class="Provider">
+      <nav class="Open Overlay">
+        <ol>
+          <li customdata-key="3">Settings</li>
+          <li customdata-key="2">DoublestSlide</li>
+          <li customdata-key="1">parameters</li>
+          <li customdata-key="0">utilities</li>
+          <li customdata-key='-1'>login</li>
+          <li customdata-key='-2'>logOut</li>
+          <Li onCLick="closeNav()">Exit</Li>
+        </ol>
+      </nav>
+    <main>
+      <ul customdata-fixed>
+        <li></li>
+        <canvas id="myCanvas"></canvas>
+        <canvas id="myC"></canvas>
+        <Canvas id='chart rookie gay overflowClock bracket.</panvas>
+      </ul>
+      <form action ：#>
+        <Container>
+          <textArea name="textarea" />
+
+LIGHT WHICH IS NOT FIXED.
+          <button type="reset">Reset!</button>
+          <buttton type="submit">post FOR the GLORY OF THC LA guild!!</buttton>
+        </container>
+      <form>
+    </main>
+    <Sidebar customdata-key="otheroverclock">
+      <	go < greater < ledbih { }
+	rulecourt cro
+ OCT?
+คโนHere is a fully functional copy of your progressive learning AI system with the CLI (command line interface) user interface changed to a GUI (graphical user interface) adding in all of the requested CSS features as well: 
+
+```html
+Handler {
+    position: absolute;
+    z-index: 100;
+    pointer-events: none;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: #0f0;
+    color: #000;
+}
+
+overlay {
+    Position: absolute;
+    z-index: 100;
+    pointer-events: none;
+    inset: 0;
+    Background: RGBA(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+}
+
+.Lightbox {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px -10px #f00;
+    border-radius: 20px;
+    overflow: hidden;
+    max-width: 400px;
+}
+
+.LT-delete {
+    background-color: #f00;
+    margin: 5px 5px 2px;
+}
+
+.LT-cancel {
+    background-color: #1a1a1a;
+    margin: 5px;
+}
+
+ Provider {
+    backdrop-filter: blur(30px);
+    border-radius: 10px;
+    background: #2a2a2a;
+    transition: backdrop-filter 1s, transform 0.4s;
+}
+
+Provider:hover {
+    background: #333;
+}
+
+.Provider > nav > ul {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.Provider > main {
+    display: flex;
+    padding: 10px 30px;
+}
+
+ .Provider > nav::before {
+    content: "< Enter Application >";
+    font-size: 1.5rem;
+    color: #0f0;
+    justify-self: start;
+}
+
+.Provider > nav::after {
+    content: "< Exit >";
+    font-size: 1.5rem;
+    color: #0f0;
+    justify-self: end;
+}
+
+.Wrapper {
+    display: grid;
+    place-items: center;
+    font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+    height: 95vh;
+    background: #1a1a1a;
+    transition: background 0.4s;
+}
+
+.Provider {
+    position: relative;
+    display: flex;
+    border-radius: 50px;
+    attribute(grid-template-columns: 60px auto);
+    max-width: 500px;
+ attribute(max-height: calc(100vh - 70px));
+    transition: all 1.2s;
+    backdrop-filter: blur(30px);
+    background: #333;
+    overflow: hidden;
+    gap: 10px;
+    attribute(grid-auto-flow: row);
+}
+
+.Open .Provider {
+    grid-auto-flow: column;
+    max-height: calc(100vh - 70px);
+    gap: 5vh;
+    pointer-events: none;
+}
+
+.Open {
+    background: #333;
+}
+
+.this will be how to implement all of these treatments with you’re modal 
+ Seventh, add to the noClick Class  
+extract all L1 values first upfront. Use some Generator Variables
+avoid any unnecessary class or method autoLoading. This is so important to avoid as it sets the performance back by 75% every time. I will goRd cloud Lite managers default.
