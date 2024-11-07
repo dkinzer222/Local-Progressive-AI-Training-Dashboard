@@ -1,3 +1,5 @@
+import { handleError, apiCall } from './utilities.js';
+
 let currentLevel = 1;
 let trainingData = [];
 let socket = io();
@@ -5,6 +7,14 @@ let trainingChart = null;
 let memoryChart = null;
 let trainingScores = [];
 let memoryPatterns = new Map();
+let trainingStartTime = null;
+let currentOperation = '';
+let operationStartTime = null;
+let trainingStats = {
+    successRate: 0,
+    patternDiversity: 0,
+    iterations: 0
+};
 
 const exampleDatasets = [
     {
@@ -43,25 +53,26 @@ const LEVEL_OBJECTIVES = {
     }
 };
 
-let trainingStartTime = null;
-let currentOperation = '';
-let operationStartTime = null;
-let trainingStats = {
-    successRate: 0,
-    patternDiversity: 0,
-    iterations: 0
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCharts();
-    loadDatasets();
-    loadModels();
-    initAdvancedViz();
-    loadExampleDatasets();
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        await Promise.all([
+            initializeCharts(),
+            loadDatasets(),
+            loadModels(),
+            initAdvancedViz(),
+            loadExampleDatasets()
+        ]);
+    } catch (error) {
+        handleError(error, 'DOMContentLoaded initialization');
+    }
 });
 
 window.addEventListener('beforeunload', function() {
-    cleanupViz();
+    try {
+        cleanupViz();
+    } catch (error) {
+        handleError(error, 'beforeunload cleanup');
+    }
 });
 
 function initializeCharts() {
@@ -112,28 +123,29 @@ function initializeCharts() {
     });
 }
 
-function loadDatasets() {
-    fetch('/api/datasets')
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.getElementById('datasetsTable');
-            tbody.innerHTML = '';
-            
-            data.datasets.forEach(dataset => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${dataset.name}</td>
-                    <td>${dataset.version}</td>
-                    <td>${dataset.description}</td>
-                    <td>${new Date(dataset.created_at).toLocaleString()}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="loadDataset(${dataset.id})">Load</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteDataset(${dataset.id})">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+async function loadDatasets() {
+    try {
+        const data = await apiCall('/api/datasets');
+        const tbody = document.getElementById('datasetsTable');
+        tbody.innerHTML = '';
+        
+        data.datasets.forEach(dataset => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${dataset.name}</td>
+                <td>${dataset.version}</td>
+                <td>${dataset.description}</td>
+                <td>${new Date(dataset.created_at).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="loadDataset(${dataset.id})">Load</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteDataset(${dataset.id})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
         });
+    } catch (error) {
+        handleError(error, 'loadDatasets');
+    }
 }
 
 function loadExampleDatasets() {
@@ -163,69 +175,68 @@ function showSaveDatasetModal() {
     modal.show();
 }
 
-function saveDataset() {
-    const name = document.getElementById('datasetName').value;
-    const version = document.getElementById('datasetVersion').value;
-    const description = document.getElementById('datasetDescription').value;
-    
-    if (!name) {
-        alert('Please provide a dataset name');
-        return;
-    }
-    
-    fetch('/api/datasets', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            name,
-            version,
-            description,
-            data: trainingData
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            bootstrap.Modal.getInstance(document.getElementById('saveDatasetModal')).hide();
-            loadDatasets();
-        } else {
-            alert('Error saving dataset: ' + data.error);
+async function saveDataset() {
+    try {
+        const name = document.getElementById('datasetName').value;
+        const version = document.getElementById('datasetVersion').value;
+        const description = document.getElementById('datasetDescription').value;
+        
+        if (!name) {
+            throw new Error('Please provide a dataset name');
         }
-    });
+        
+        const response = await apiCall('/api/datasets', {
+            method: 'POST',
+            body: JSON.stringify({
+                name,
+                version,
+                description,
+                data: trainingData
+            })
+        });
+
+        if (response.status === 'success') {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('saveDatasetModal'));
+            modal.hide();
+            await loadDatasets();
+        }
+    } catch (error) {
+        handleError(error, 'saveDataset');
+    }
 }
 
-function loadDataset(id) {
-    fetch(`/api/datasets/${id}`)
-        .then(response => response.json())
-        .then(dataset => {
-            trainingData = dataset.data;
-            updateDatasetDisplay();
-        });
+async function loadDataset(id) {
+    try {
+        const dataset = await apiCall(`/api/datasets/${id}`);
+        trainingData = dataset.data;
+        updateDatasetDisplay();
+    } catch (error) {
+        handleError(error, 'loadDataset');
+    }
 }
 
-function loadModels() {
-    fetch('/api/models')
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.getElementById('modelsTable');
-            tbody.innerHTML = '';
-            
-            data.models.forEach(model => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${model.name}</td>
-                    <td>${model.version}</td>
-                    <td>${new Date(model.created_at).toLocaleString()}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="exportModel(${model.id})">Export</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteModel(${model.id})">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+async function loadModels() {
+    try {
+        const data = await apiCall('/api/models');
+        const tbody = document.getElementById('modelsTable');
+        tbody.innerHTML = '';
+        
+        data.models.forEach(model => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${model.name}</td>
+                <td>${model.version}</td>
+                <td>${new Date(model.created_at).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="exportModel(${model.id})">Export</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteModel(${model.id})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
         });
+    } catch (error) {
+        handleError(error, 'loadModels');
+    }
 }
 
 function showSaveModelModal() {
@@ -233,57 +244,53 @@ function showSaveModelModal() {
     modal.show();
 }
 
-function saveModel() {
-    const name = document.getElementById('modelName').value;
-    const version = document.getElementById('modelVersion').value;
-    
-    if (!name) {
-        alert('Please provide a model name');
-        return;
-    }
-    
-    fetch('/api/models', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            name,
-            version,
-            configuration: {
-                current_level: currentLevel,
-                training_scores: trainingScores
-            }
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            localStorage.setItem(`model_${data.model_id}_api_key`, data.api_key);
-            bootstrap.Modal.getInstance(document.getElementById('saveModelModal')).hide();
-            loadModels();
-            alert('Model saved successfully! API Key: ' + data.api_key);
-        } else {
-            alert('Error saving model: ' + data.error);
+async function saveModel() {
+    try {
+        const name = document.getElementById('modelName').value;
+        const version = document.getElementById('modelVersion').value;
+        
+        if (!name) {
+            throw new Error('Please provide a model name');
         }
-    });
+        
+        const response = await apiCall('/api/models', {
+            method: 'POST',
+            body: JSON.stringify({
+                name,
+                version,
+                configuration: {
+                    current_level: currentLevel,
+                    training_scores: trainingScores
+                }
+            })
+        });
+
+        if (response.status === 'success') {
+            localStorage.setItem(`model_${response.model_id}_api_key`, response.api_key);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('saveModelModal'));
+            modal.hide();
+            await loadModels();
+            alert('Model saved successfully! API Key: ' + response.api_key);
+        }
+    } catch (error) {
+        handleError(error, 'saveModel');
+    }
 }
 
-function exportModel(id) {
-    const apiKey = localStorage.getItem(`model_${id}_api_key`);
-    if (!apiKey) {
-        alert('API key not found for this model');
-        return;
-    }
-    
-    fetch(`/api/models/${id}/export`, {
-        headers: {
-            'X-API-Key': apiKey
+async function exportModel(id) {
+    try {
+        const apiKey = localStorage.getItem(`model_${id}_api_key`);
+        if (!apiKey) {
+            throw new Error('API key not found for this model');
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        
+        const response = await apiCall(`/api/models/${id}/export`, {
+            headers: {
+                'X-API-Key': apiKey
+            }
+        });
+
+        const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -292,7 +299,9 @@ function exportModel(id) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-    });
+    } catch (error) {
+        handleError(error, 'exportModel');
+    }
 }
 
 function updateTrainingStatus(operation, progress) {
@@ -462,62 +471,65 @@ function removeDataset(button) {
     button.closest('.dataset').remove();
 }
 
-function startTraining() {
-    const datasets = document.querySelectorAll('.dataset');
-    let hasErrors = false;
-    trainingData = [];
-    
-    datasets.forEach(dataset => {
-        const input = dataset.querySelector('input[id^="input"]');
-        const output = dataset.querySelector('input[id^="output"]');
-        const validation = validateDataset(input.value, output.value);
+async function startTraining() {
+    try {
+        const datasets = document.querySelectorAll('.dataset');
+        let hasErrors = false;
+        trainingData = [];
         
-        if (!validation.valid) {
-            input.classList.add('is-invalid');
-            output.classList.add('is-invalid');
-            dataset.querySelector('[id^="input-error"]').textContent = validation.message;
-            hasErrors = true;
-            return;
-        }
-        
-        input.classList.remove('is-invalid');
-        output.classList.remove('is-invalid');
-        trainingData.push({
-            input: input.value,
-            output: output.value
+        datasets.forEach(dataset => {
+            const input = dataset.querySelector('input[id^="input"]');
+            const output = dataset.querySelector('input[id^="output"]');
+            const validation = validateDataset(input.value, output.value);
+            
+            if (!validation.valid) {
+                input.classList.add('is-invalid');
+                output.classList.add('is-invalid');
+                dataset.querySelector('[id^="input-error"]').textContent = validation.message;
+                hasErrors = true;
+                return;
+            }
+            
+            input.classList.remove('is-invalid');
+            output.classList.remove('is-invalid');
+            trainingData.push({
+                input: input.value,
+                output: output.value
+            });
         });
-    });
 
-    if (hasErrors || trainingData.length === 0) {
-        alert('Please fix the errors in your datasets before training');
-        return;
+        if (hasErrors || trainingData.length === 0) {
+            throw new Error('Please fix the errors in your datasets before training');
+        }
+
+        const trainButton = document.querySelector('#trainButton');
+        trainButton.disabled = true;
+        
+        document.getElementById('trainingProgress').innerHTML = '<h3>Training Progress:</h3>';
+        trainingScores = [];
+        memoryPatterns.clear();
+        if (trainingChart) trainingChart.data.datasets[0].data = [];
+        if (memoryChart) memoryChart.data.datasets[0].data = [];
+        
+        updateProgress(0);
+        
+        socket.emit('start_training', {
+            current_level: currentLevel,
+            data: trainingData
+        });
+
+        await apiCall('/api/train', {
+            method: 'POST',
+            body: JSON.stringify({
+                training_data: trainingData,
+                level: currentLevel
+            })
+        });
+    } catch (error) {
+        handleError(error, 'startTraining');
+        const trainButton = document.querySelector('#trainButton');
+        trainButton.disabled = false;
     }
-
-    document.querySelector('#trainButton').disabled = true;
-    
-    document.getElementById('trainingProgress').innerHTML = '<h3>Training Progress:</h3>';
-    trainingScores = [];
-    memoryPatterns.clear();
-    if (trainingChart) trainingChart.data.datasets[0].data = [];
-    if (memoryChart) memoryChart.data.datasets[0].data = [];
-    
-    updateProgress(0);
-    
-    socket.emit('start_training', {
-        current_level: currentLevel,
-        data: trainingData
-    });
-
-    fetch('/api/train', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            training_data: trainingData,
-            level: currentLevel
-        })
-    });
 }
 
 socket.on('training_progress', function(data) {
