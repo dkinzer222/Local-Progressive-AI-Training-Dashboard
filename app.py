@@ -6,6 +6,9 @@ from sqlalchemy.orm import DeclarativeBase
 from utils.ai_engine import AIEngine
 import json
 from functools import wraps
+from datasets import load_dataset
+from huggingface_hub import list_datasets
+import time
 
 class Base(DeclarativeBase):
     pass
@@ -47,7 +50,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/datasets', methods=['GET'])
-def list_datasets():
+def list_local_datasets():
     datasets = Dataset.query.all()
     return jsonify({
         "datasets": [
@@ -60,6 +63,68 @@ def list_datasets():
             } for ds in datasets
         ]
     })
+
+@app.route('/api/datasets/huggingface/search', methods=['GET'])
+def search_huggingface_datasets():
+    query = request.args.get('query', '')
+    try:
+        datasets = list_datasets()
+        filtered_datasets = [ds for ds in datasets if query.lower() in ds.id.lower()]
+        return jsonify({
+            "datasets": [
+                {
+                    "id": ds.id,
+                    "name": ds.id.split('/')[-1],
+                    "description": ds.description,
+                    "downloads": ds.downloads,
+                    "likes": ds.likes
+                } for ds in filtered_datasets[:10]  # Limit to 10 results
+            ]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/datasets/huggingface/preview/<path:dataset_id>', methods=['GET'])
+def preview_huggingface_dataset(dataset_id):
+    try:
+        dataset = load_dataset(dataset_id, split='train[:5]')  # Load first 5 examples
+        return jsonify({
+            "samples": dataset[:5],
+            "features": dataset.features
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/datasets/huggingface/import', methods=['POST'])
+@require_api_key
+def import_huggingface_dataset():
+    data = request.json
+    try:
+        dataset_id = data.get('dataset_id')
+        if not dataset_id:
+            return jsonify({"error": "No dataset ID provided"}), 400
+
+        # Load first 100 examples from the dataset
+        hf_dataset = load_dataset(dataset_id, split='train[:100]')
+        
+        # Convert to our format and save
+        dataset = Dataset(
+            name=f"HuggingFace: {dataset_id}",
+            version="1.0",
+            description=f"Imported from HuggingFace: {dataset_id}",
+            data=hf_dataset[:100]
+        )
+        db.session.add(dataset)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "dataset_id": dataset.id,
+            "message": f"Successfully imported {dataset_id}"
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/datasets', methods=['POST'])
 def create_dataset():
@@ -111,7 +176,7 @@ def create_model():
         return jsonify({
             "status": "success",
             "model_id": model.id,
-            "api_key": api_key  # Only shown once upon creation
+            "api_key": api_key
         })
     except Exception as e:
         db.session.rollback()
@@ -147,7 +212,6 @@ def train():
             )
             db.session.add(training_data)
             
-            # Train AI Engine
             score, message, patterns = ai_engine.train(item['input'], item['output'])
             training_data.score = score
             results.append({
@@ -188,11 +252,9 @@ def handle_training(data):
             if not item.get('input') or not item.get('output'):
                 continue
                 
-            # Train the AI
             score, message, patterns = ai_engine.train(item['input'], item['output'])
             progress = ((i + 1) / len(training_data)) * 100
             
-            # Store pattern in memory
             memory = AIMemory(
                 pattern_type='basic',
                 pattern=item['input'],
@@ -201,7 +263,6 @@ def handle_training(data):
             db.session.add(memory)
             db.session.commit()
             
-            # Emit progress with visualization data
             emit('training_progress', {
                 'progress': progress,
                 'level': ai_engine.current_level,
@@ -227,7 +288,6 @@ def chat():
         if not user_input:
             return jsonify({"response": "Please provide a message"}), 400
             
-        # Get response from AI Engine
         response, confidence = ai_engine.generate_response(user_input)
         
         return jsonify({

@@ -10,6 +10,7 @@
     <script src="{{ url_for('static', filename='js/advanced-viz.js') }}"></script>
     <script src="{{ url_for('static', filename='js/training.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/datasets.js') }}"></script>
 </head>
 <body data-bs-theme="dark">
     <div class="container">
@@ -82,6 +83,16 @@
             <div class="tab-pane fade" id="nav-datasets" role="tabpanel">
                 <div class="card p-4">
                     <h2>Dataset Management</h2>
+                    <div class="mb-4">
+                        <h3>HuggingFace Datasets</h3>
+                        <div class="input-group mb-3">
+                            <input type="text" id="huggingfaceSearch" class="form-control" placeholder="Search HuggingFace datasets...">
+                            <button class="btn btn-secondary" onclick="searchHuggingFaceDatasets()">Search</button>
+                        </div>
+                        <div id="huggingfaceResults" class="mb-3">
+                            <!-- Search results will be displayed here -->
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <button class="btn btn-primary" onclick="showSaveDatasetModal()">Create New Dataset</button>
                     </div>
@@ -190,6 +201,52 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveModel()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dataset Preview Modal -->
+    <div class="modal fade" id="datasetPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dataset Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="previewContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="importDataset()">Import Dataset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div class="modal fade" id="apiKeyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">API Key Generated</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-success">
+                        <strong>Success!</strong> Your API key has been generated.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Your API Key (save this, it won't be shown again):</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="apiKeyDisplay" readonly>
+                            <button class="btn btn-secondary" onclick="copyApiKey()">Copy</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
